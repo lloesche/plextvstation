@@ -31,6 +31,10 @@ more-itertools==10.1.0
     #   cherrypy
     #   jaraco-functools
     #   jaraco-text
+numpy==1.26.1
+    # via pandas
+pandas==2.1.2
+    # via plextvstation (pyproject.toml)
 portend==3.2.0
     # via cherrypy
 prometheus-client==0.18.0
@@ -41,12 +45,18 @@ pydantic==2.4.2
     # via inflect
 pydantic-core==2.10.1
     # via pydantic
+python-dateutil==2.8.2
+    # via pandas
 pytz==2023.3.post1
-    # via tempora
+    # via
+    #   pandas
+    #   tempora
 requests==2.31.0
     # via plextvstation (pyproject.toml)
 setuptools==68.2.2
     # via zc-lockfile
+six==1.16.0
+    # via python-dateutil
 tempora==5.5.0
     # via portend
 typing-extensions==4.8.0
@@ -54,6 +64,8 @@ typing-extensions==4.8.0
     #   inflect
     #   pydantic
     #   pydantic-core
+tzdata==2023.3
+    # via pandas
 urllib3==2.0.7
     # via requests
 zc-lockfile==3.0.post1
