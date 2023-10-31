@@ -1,0 +1,174 @@
+annotated-types==0.6.0
+    # via pydantic
+astroid==3.0.1
+    # via pylint
+attrs==23.1.0
+    # via hypothesis
+autocommand==2.2.2
+    # via jaraco-text
+black==23.10.1
+    # via plextvstation (pyproject.toml)
+build==1.0.3
+    # via pip-tools
+cachetools==5.3.2
+    # via tox
+certifi==2023.7.22
+    # via requests
+chardet==5.2.0
+    # via tox
+charset-normalizer==3.3.1
+    # via requests
+cheroot==10.0.0
+    # via cherrypy
+cherrypy==18.8.0
+    # via plextvstation (pyproject.toml)
+click==8.1.7
+    # via
+    #   black
+    #   pip-tools
+colorama==0.4.6
+    # via tox
+coverage[toml]==7.3.2
+    # via
+    #   plextvstation (pyproject.toml)
+    #   pytest-cov
+dill==0.3.7
+    # via pylint
+distlib==0.3.7
+    # via virtualenv
+filelock==3.13.1
+    # via
+    #   tox
+    #   virtualenv
+flake8==6.1.0
+    # via
+    #   pep8-naming
+    #   plextvstation (pyproject.toml)
+hypothesis==6.88.1
+    # via plextvstation (pyproject.toml)
+idna==3.4
+    # via requests
+inflect==7.0.0
+    # via jaraco-text
+iniconfig==2.0.0
+    # via pytest
+isort==5.12.0
+    # via pylint
+jaraco-collections==4.3.0
+    # via cherrypy
+jaraco-context==4.3.0
+    # via jaraco-text
+jaraco-functools==3.9.0
+    # via
+    #   cheroot
+    #   jaraco-text
+    #   tempora
+jaraco-text==3.11.1
+    # via jaraco-collections
+mccabe==0.7.0
+    # via
+    #   flake8
+    #   pylint
+more-itertools==10.1.0
+    # via
+    #   cheroot
+    #   cherrypy
+    #   jaraco-functools
+    #   jaraco-text
+mypy==1.6.1
+    # via plextvstation (pyproject.toml)
+mypy-extensions==1.0.0
+    # via
+    #   black
+    #   mypy
+packaging==23.2
+    # via
+    #   black
+    #   build
+    #   pyproject-api
+    #   pytest
+    #   tox
+pathspec==0.11.2
+    # via black
+pep8-naming==0.13.3
+    # via plextvstation (pyproject.toml)
+pip==23.3.1
+    # via pip-tools
+pip-tools==7.3.0
+    # via plextvstation (pyproject.toml)
+platformdirs==3.11.0
+    # via
+    #   black
+    #   pylint
+    #   tox
+    #   virtualenv
+pluggy==1.3.0
+    # via
+    #   pytest
+    #   tox
+portend==3.2.0
+    # via cherrypy
+prometheus-client==0.18.0
+    # via plextvstation (pyproject.toml)
+psutil==5.9.6
+    # via plextvstation (pyproject.toml)
+pycodestyle==2.11.1
+    # via flake8
+pydantic==2.4.2
+    # via inflect
+pydantic-core==2.10.1
+    # via pydantic
+pyflakes==3.1.0
+    # via flake8
+pylint==3.0.2
+    # via plextvstation (pyproject.toml)
+pyproject-api==1.6.1
+    # via tox
+pyproject-hooks==1.0.0
+    # via build
+pytest==7.4.3
+    # via
+    #   plextvstation (pyproject.toml)
+    #   pytest-asyncio
+    #   pytest-cov
+    #   pytest-mock
+pytest-asyncio==0.21.1
+    # via plextvstation (pyproject.toml)
+pytest-cov==4.1.0
+    # via plextvstation (pyproject.toml)
+pytest-mock==3.12.0
+    # via plextvstation (pyproject.toml)
+pytest-runner==6.0.0
+    # via plextvstation (pyproject.toml)
+pytz==2023.3.post1
+    # via tempora
+requests==2.31.0
+    # via plextvstation (pyproject.toml)
+setuptools==68.2.2
+    # via
+    #   pip-tools
+    #   zc-lockfile
+sortedcontainers==2.4.0
+    # via hypothesis
+tempora==5.5.0
+    # via portend
+tomlkit==0.12.1
+    # via pylint
+tox==4.11.3
+    # via plextvstation (pyproject.toml)
+typing-extensions==4.8.0
+    # via
+    #   inflect
+    #   mypy
+    #   pydantic
+    #   pydantic-core
+urllib3==2.0.7
+    # via requests
+virtualenv==20.24.6
+    # via tox
+wheel==0.41.3
+    # via
+    #   pip-tools
+    #   plextvstation (pyproject.toml)
+zc-lockfile==3.0.post1
+    # via cherrypy

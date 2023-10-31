@@ -1,0 +1,60 @@
+annotated-types==0.6.0
+    # via pydantic
+autocommand==2.2.2
+    # via jaraco-text
+certifi==2023.7.22
+    # via requests
+charset-normalizer==3.3.1
+    # via requests
+cheroot==10.0.0
+    # via cherrypy
+cherrypy==18.8.0
+    # via plextvstation (pyproject.toml)
+idna==3.4
+    # via requests
+inflect==7.0.0
+    # via jaraco-text
+jaraco-collections==4.3.0
+    # via cherrypy
+jaraco-context==4.3.0
+    # via jaraco-text
+jaraco-functools==3.9.0
+    # via
+    #   cheroot
+    #   jaraco-text
+    #   tempora
+jaraco-text==3.11.1
+    # via jaraco-collections
+more-itertools==10.1.0
+    # via
+    #   cheroot
+    #   cherrypy
+    #   jaraco-functools
+    #   jaraco-text
+portend==3.2.0
+    # via cherrypy
+prometheus-client==0.18.0
+    # via plextvstation (pyproject.toml)
+psutil==5.9.6
+    # via plextvstation (pyproject.toml)
+pydantic==2.4.2
+    # via inflect
+pydantic-core==2.10.1
+    # via pydantic
+pytz==2023.3.post1
+    # via tempora
+requests==2.31.0
+    # via plextvstation (pyproject.toml)
+setuptools==68.2.2
+    # via zc-lockfile
+tempora==5.5.0
+    # via portend
+typing-extensions==4.8.0
+    # via
+    #   inflect
+    #   pydantic
+    #   pydantic-core
+urllib3==2.0.7
+    # via requests
+zc-lockfile==3.0.post1
+    # via cherrypy

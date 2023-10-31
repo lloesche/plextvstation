@@ -1,0 +1,68 @@
+[project]
+name = "plextvstation"
+version = "0.0.1"
+authors = [{name="Lukas Lösche"}]
+description = "A virtual TV station manager powered by Plex media server."
+license = {file="LICENSE"}
+requires-python = ">=3.12"
+classifiers = [
+    # Current project status
+    "Development Status :: 4 - Beta",
+    # Audience
+    "Intended Audience :: End Users/Desktop",
+    "Intended Audience :: System Administrators",
+    "Intended Audience :: Information Technology",
+    # License information
+    "License :: OSI Approved :: Apache Software License",
+    # Supported python versions
+    "Programming Language :: Python :: 3.12",
+    # Supported OS's
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: Unix",
+    # Extra metadata
+    "Environment :: Console",
+    "Natural Language :: English",
+    "Topic :: Multimedia :: Video",
+    "Topic :: Multimedia :: Video :: Display",
+    "Topic :: Utilities",
+]
+readme = {file="README.md", content-type="text/markdown"}
+keywords = ["plex", "tv station", "streaming", "media", "scheduler"]
+
+dependencies = [
+    "CherryPy",
+    "requests",
+    "prometheus-client",
+    "psutil",
+    "pandas",
+]
+
+[project.scripts]
+plextvstation = "plextvstation.__main__:main"
+
+[project.optional-dependencies]
+test = [
+    "black",
+    "coverage",
+    "flake8",
+    "hypothesis",
+    "mypy",
+    "pep8-naming",
+    "pylint",
+    "pytest",
+    "pytest-asyncio",
+    "pytest-cov",
+    "pytest-runner",
+    "pytest-mock",
+    "tox",
+    "wheel",
+    "pip-tools",
+]
+
+[project.urls]
+Documentation = "https://github.com/lloesche/plextvstation"
+Source = "https://github.com/lloesche/plextvstation"
+
+[build-system]
+requires = ["setuptools", "wheel", "build"]
+build-backend = "setuptools.build_meta"
