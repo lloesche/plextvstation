@@ -1,11 +1,12 @@
 import os
 import sqlite3
 import platform
+from abc import ABC
 from datetime import timedelta, datetime
 from dataclasses import dataclass, field
 from typing import Optional, List, Tuple
 from argparse import ArgumentParser, ArgumentTypeError, Namespace
-from .utils import from_timestamp, DefaultList
+from .utils import from_timestamp
 from .logging import log
 
 
@@ -13,7 +14,10 @@ def add_args(parser: ArgumentParser) -> None:
     parser.add_argument(
         "--plex-db",
         dest="plex_db",
-        help="Path to Plex database (default: ~/Library/Application Support/Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.db)",
+        help=(
+            "Path to Plex database (default: ~/Library/Application Support/Plex Media Server/Plug-in"
+            " Support/Databases/com.plexapp.plugins.library.db)"
+        ),
         type=valid_plex_db,
         default=get_default_plex_db_path(),
     )
@@ -32,6 +36,7 @@ def validate_args(parser: ArgumentParser, args: Namespace) -> None:
 
 def get_default_plex_db_path() -> Optional[str]:
     current_platform = platform.system()
+    default_path: Optional[str] = None
     if current_platform == "Windows":
         default_path = os.path.join(
             os.environ["LOCALAPPDATA"],
@@ -41,16 +46,19 @@ def get_default_plex_db_path() -> Optional[str]:
             "com.plexapp.plugins.library.db",
         )
     elif current_platform == "Linux":
-        default_path = "/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.db"
+        default_path = (
+            "/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Plug-in"
+            " Support/Databases/com.plexapp.plugins.library.db"
+        )
     elif current_platform == "Darwin":
         default_path = os.path.expanduser(
             "~/Library/Application Support/Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.db"
         )
 
-    if not os.path.isfile(default_path):
+    if isinstance(default_path, str) and not os.path.isfile(default_path):
         default_path = "com.plexapp.plugins.library.db"
 
-    if not os.path.isfile(default_path):
+    if isinstance(default_path, str) and not os.path.isfile(default_path):
         default_path = None
     else:
         try:
@@ -61,8 +69,11 @@ def get_default_plex_db_path() -> Optional[str]:
     return default_path
 
 
-def valid_plex_db(plex_db_path: str) -> str:
+def valid_plex_db(plex_db_path: Optional[str]) -> str:
     """Check if the given path is a valid SQLite3 file with the required Plex tables."""
+
+    if plex_db_path is None:
+        raise ArgumentTypeError("Path to Plex database is required.")
 
     if not os.path.isfile(plex_db_path):
         raise ArgumentTypeError(f"'{plex_db_path}' does not point to a valid file.")
@@ -91,7 +102,7 @@ def valid_plex_db(plex_db_path: str) -> str:
 
 def path_translation(pt: str) -> Tuple[str, str]:
     err = f"'{pt}' is not a valid path translation. Must be in the form '/mnt/plex -> /data/plex'."
-    if not "->" in pt:
+    if "->" not in pt:
         raise ArgumentTypeError(err)
 
     src, dst = pt.split("->")
@@ -104,7 +115,7 @@ def path_translation(pt: str) -> Tuple[str, str]:
 
 
 @dataclass
-class Media:
+class MediaFile:
     id: int
     file: str
     duration: timedelta
@@ -116,7 +127,7 @@ class Episode:
     title: str
     summary: Optional[str]
     aired_at: Optional[datetime]
-    media: Media
+    media: MediaFile
     season_number: int
     episode_number: int
 
@@ -124,29 +135,29 @@ class Episode:
 @dataclass
 class Season:
     season_number: int
-    episodes: List[Episode] = field(default_factory=list)
+    episodes: List[Optional[Episode]] = field(default_factory=list)
 
 
 @dataclass
-class TVShow:
+class MediaBase(ABC):
     id: int
     title: str
     summary: Optional[str]
     tagline: Optional[str]
-    genres: Optional[str]
+    genres: List[str]
     released_at: Optional[datetime]
+
+
+@dataclass
+class TVShow(MediaBase):
     seasons: List[Season] = field(default_factory=list)
+    first_aired: Optional[datetime] = None
+    last_aired: Optional[datetime] = None
 
 
 @dataclass
-class Movie:
-    id: int
-    title: str
-    summary: Optional[str]
-    tagline: Optional[str]
-    genres: Optional[str]
-    released_at: Optional[datetime]
-    media: Media
+class Movie(MediaBase):
+    media: MediaFile
 
 
 class PlexDB:
@@ -195,14 +206,17 @@ class PlexDB:
         rows = self._execute_query(query)
         movies = []
         for row in rows:
+            genres: List[str] = []
+            if row["genres"]:
+                genres = row["genres"].split(",")
             movie = Movie(
                 id=row["movie_id"],
                 title=row["title"],
                 tagline=row["tagline"],
                 summary=row["summary"],
-                genres=row["genres"].split(",") if row["genres"] else None,
+                genres=genres,
                 released_at=from_timestamp(row["originally_available_at"]) if row["originally_available_at"] else None,
-                media=Media(
+                media=MediaFile(
                     id=row["media_id"],
                     file=self.__path_translate(row["file"]),
                     duration=timedelta(milliseconds=row["duration"]),
@@ -214,7 +228,7 @@ class PlexDB:
     def fetch_all_tv_shows(self) -> List[TVShow]:
         log.debug("Fetching all TV shows")
         query = """
-        SELECT 
+        SELECT
             mi.id AS show_id,
             mi.title AS show_title,
             GROUP_CONCAT(t.tag, ', ') AS genres,
@@ -230,11 +244,14 @@ class PlexDB:
         rows = self._execute_query(query)
         tv_shows = []
         for row in rows:
+            genres: List[str] = []
+            if row["genres"]:
+                genres = row["genres"].split(",")
             tv_show = TVShow(
                 id=row["show_id"],
                 title=row["show_title"],
                 tagline=row["show_tagline"],
-                genres=row["genres"].split(",") if row["genres"] else [],
+                genres=genres,
                 summary=row["show_summary"],
                 released_at=from_timestamp(row["show_release_date"]) if row["show_release_date"] else from_timestamp(0),
                 seasons=[],
@@ -246,7 +263,7 @@ class PlexDB:
         log.debug("Fetching all episodes")
         tv_shows = {show.id: show for show in self.tv_shows}
         query = """
-        SELECT 
+        SELECT
             mi.id AS episode_id,
             mi.parent_id AS season_id,
             mip.parent_id AS show_id,
@@ -272,7 +289,7 @@ class PlexDB:
                 title=row["episode_title"],
                 summary=row["episode_summary"],
                 aired_at=from_timestamp(row["aired_at"]) if row["aired_at"] else None,
-                media=Media(
+                media=MediaFile(
                     id=row["episode_id"],
                     file=row["episode_file"],
                     duration=timedelta(milliseconds=row["episode_duration"])
@@ -292,6 +309,11 @@ class PlexDB:
                 for _ in range(len(tv_show.seasons[episode.season_number].episodes), episode.episode_number + 1):
                     tv_show.seasons[episode.season_number].episodes.append(None)
             tv_show.seasons[episode.season_number].episodes[episode.episode_number] = episode
+            if episode.aired_at is not None:
+                if tv_show.first_aired is None or tv_show.first_aired > episode.aired_at:
+                    tv_show.first_aired = episode.aired_at
+                if tv_show.last_aired is None or tv_show.last_aired < episode.aired_at:
+                    tv_show.last_aired = episode.aired_at
 
     def __path_translate(self, path: str) -> str:
         if self.path_translate is None:

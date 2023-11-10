@@ -10,7 +10,7 @@ import threading
 import subprocess
 import pandas as pd
 from dataclasses import asdict, is_dataclass, fields
-from typing import Optional, Callable, Union, List, Any, Iterable, TypeVar, overload
+from typing import Optional, Callable, Union, List, Any
 from types import FrameType
 from signal import signal, Signals, SIGTERM, SIGINT
 from datetime import datetime, timedelta, timezone
@@ -288,9 +288,14 @@ def num_default_threads(num_min_threads: int = 2) -> int:
     return max(count, num_min_threads)
 
 
-def from_timestamp(ts: Union[int, float]) -> datetime:
+def from_timestamp(
+    ts: Optional[Union[int, float]], cutoff: datetime = datetime(1910, 1, 1, tzinfo=timezone.utc)
+) -> Optional[datetime]:
+    if ts is None or not isinstance(ts, (int, float)) or not ts:
+        return None
     reference_date = datetime(1970, 1, 1, tzinfo=timezone.utc)
-    return reference_date + timedelta(seconds=ts)
+    likely_timestamp = reference_date + timedelta(seconds=ts)
+    return likely_timestamp if likely_timestamp > cutoff else None
 
 
 def dataclass2html_table(data_objects: List[Any]) -> str:
@@ -309,32 +314,4 @@ def dataclass2html_table(data_objects: List[Any]) -> str:
             df[field.name] = pd.to_datetime(df[field.name])
             df[field.name] = df[field.name].dt.strftime("%Y-%m-%d %H:%M:%S")
 
-    return df.to_html(classes="data-table", border=0)
-
-
-_T = TypeVar("_T")
-
-
-class DefaultList(list):
-    def __init__(self, __iterable: Optional[Iterable[_T]] = None, factory: Optional[Callable[[], _T]] = None) -> None:
-        self.__factory = factory
-        if __iterable:
-            super().__init__(__iterable)
-        else:
-            super().__init__()
-
-    def __getitem__(self, index):
-        while len(self) <= index:
-            if self.__factory:
-                self.append(self.__factory())
-            else:
-                self.append(None)
-        return super(DefaultList, self).__getitem__(index)
-
-    def __setitem__(self, index, value):
-        while len(self) <= index:
-            if self.__factory:
-                self.append(self.__factory())
-            else:
-                self.append(None)
-        super(DefaultList, self).__setitem__(index, value)
+    return str(df.to_html(classes="data-table", border=0))
