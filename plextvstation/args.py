@@ -16,6 +16,13 @@ def parse_args(
         help="Working directory (default: ~/plextvstation)",
         default="~/plextvstation",
     )
+    parser.add_argument(
+        "-n",
+        "--network",
+        dest="network",
+        help="Network name (default: Plex Station Network)",
+        default="Plex Station Network",
+    )
 
     if add_args is not None:
         for add_arg in add_args:

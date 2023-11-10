@@ -1,13 +1,12 @@
 import os
 import sqlite3
 import platform
-from abc import ABC
-from datetime import timedelta, datetime
-from dataclasses import dataclass, field
+from datetime import timedelta
 from typing import Optional, List, Tuple
 from argparse import ArgumentParser, ArgumentTypeError, Namespace
 from .utils import from_timestamp
 from .logging import log
+from .media import Movie, TVShow, Episode, Season, MediaFile
 
 
 def add_args(parser: ArgumentParser) -> None:
@@ -114,52 +113,6 @@ def path_translation(pt: str) -> Tuple[str, str]:
     return src, dst
 
 
-@dataclass
-class MediaFile:
-    id: int
-    file: str
-    duration: timedelta
-
-
-@dataclass
-class Episode:
-    id: int
-    title: str
-    summary: Optional[str]
-    aired_at: Optional[datetime]
-    media: MediaFile
-    season_number: int
-    episode_number: int
-
-
-@dataclass
-class Season:
-    season_number: int
-    episodes: List[Optional[Episode]] = field(default_factory=list)
-
-
-@dataclass
-class MediaBase(ABC):
-    id: int
-    title: str
-    summary: Optional[str]
-    tagline: Optional[str]
-    genres: List[str]
-    released_at: Optional[datetime]
-
-
-@dataclass
-class TVShow(MediaBase):
-    seasons: List[Season] = field(default_factory=list)
-    first_aired: Optional[datetime] = None
-    last_aired: Optional[datetime] = None
-
-
-@dataclass
-class Movie(MediaBase):
-    media: MediaFile
-
-
 class PlexDB:
     def __init__(self, args: Namespace) -> None:
         self.plex_db_path = args.plex_db
@@ -261,7 +214,7 @@ class PlexDB:
 
     def fetch_all_episodes(self) -> None:
         log.debug("Fetching all episodes")
-        tv_shows = {show.id: show for show in self.tv_shows}
+        tv_shows: dict[int, TVShow] = {show.id: show for show in self.tv_shows}
         query = """
         SELECT
             mi.id AS episode_id,
@@ -284,6 +237,19 @@ class PlexDB:
         rows = self._execute_query(query)
 
         for row in rows:
+            tv_show: TVShow = tv_shows[row["show_id"]]
+            season_number = row["season_number"]
+            episode_number = row["episode_number"]
+
+            if len(tv_show.seasons) <= season_number:
+                for i in range(len(tv_show.seasons), season_number + 1):
+                    tv_show.seasons.append(Season(number=i))
+            season: Season = tv_show.seasons[season_number]
+
+            if len(season.episodes) <= episode_number:
+                for _ in range(len(season.episodes), episode_number + 1):
+                    season.episodes.append(None)
+
             episode = Episode(
                 id=row["episode_id"],
                 title=row["episode_title"],
@@ -296,19 +262,13 @@ class PlexDB:
                     if row["episode_duration"]
                     else timedelta(milliseconds=0),
                 ),
-                season_number=row["season_number"],
-                episode_number=row["episode_number"],
+                season=season,
+                number=episode_number,
+                tv_show=tv_show,
             )
 
-            tv_show = tv_shows[row["show_id"]]
-            if len(tv_show.seasons) <= episode.season_number:
-                for i in range(len(tv_show.seasons), episode.season_number + 1):
-                    tv_show.seasons.append(Season(season_number=i))
+            tv_show.seasons[season_number].episodes[episode_number] = episode
 
-            if len(tv_show.seasons[episode.season_number].episodes) <= episode.episode_number:
-                for _ in range(len(tv_show.seasons[episode.season_number].episodes), episode.episode_number + 1):
-                    tv_show.seasons[episode.season_number].episodes.append(None)
-            tv_show.seasons[episode.season_number].episodes[episode.episode_number] = episode
             if episode.aired_at is not None:
                 if tv_show.first_aired is None or tv_show.first_aired > episode.aired_at:
                     tv_show.first_aired = episode.aired_at

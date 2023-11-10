@@ -13,7 +13,7 @@ from . import __title__ as title, __version__ as version
 from .web import WebServer, add_args as web_add_args
 from .web.app import WebApp
 from .plex import add_args as plex_add_args, validate_args as plex_validate_args, PlexDB
-
+from .station import load_network, save_network, Network
 
 shutdown_event = Event()
 
@@ -32,6 +32,7 @@ def main() -> None:
     initializer(shutdown)
     config = get_config(args)
     make_dirs(config)
+    network: Network = load_network(config)
 
     web_server = WebServer(
         WebApp(plexdb=PlexDB(args)),
@@ -43,6 +44,7 @@ def main() -> None:
     web_server.start()
 
     shutdown_event.wait()
+    save_network(config, network)
     web_server.shutdown()
     kill_children(SIGTERM, ensure_death=True)
     log.info("Shutdown complete")

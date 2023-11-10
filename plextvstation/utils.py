@@ -10,7 +10,7 @@ import threading
 import subprocess
 import pandas as pd
 from dataclasses import asdict, is_dataclass, fields
-from typing import Optional, Callable, Union, List, Any
+from typing import Optional, Callable, Union, Any
 from types import FrameType
 from signal import signal, Signals, SIGTERM, SIGINT
 from datetime import datetime, timedelta, timezone
@@ -298,20 +298,49 @@ def from_timestamp(
     return likely_timestamp if likely_timestamp > cutoff else None
 
 
-def dataclass2html_table(data_objects: List[Any]) -> str:
+def safe_asdict(obj: Any, max_depth: int = 100, _depth: int = 0, _seen: Optional[set[int]] = None) -> Any:
+    """Convert a dataclass to a dictionary, handling circular references."""
+    if _seen is None:
+        _seen = set()
+
+    if not is_dataclass(obj):
+        return obj
+
+    obj_id = id(obj)
+    if obj_id in _seen:
+        return f"Circular Reference to {obj.__class__.__name__}({obj_id})"
+    _seen.add(obj_id)
+
+    if _depth >= max_depth:
+        return "Max depth reached"
+
+    result = {}
+    for field in fields(obj):
+        value = getattr(obj, field.name)
+        if is_dataclass(value):
+            result[field.name] = safe_asdict(value, max_depth, _depth + 1, _seen)
+        elif isinstance(value, list):
+            result[field.name] = [
+                safe_asdict(item, max_depth, _depth + 1, _seen) if is_dataclass(item) else item for item in value
+            ]
+        else:
+            result[field.name] = value
+
+    return result
+
+
+def dataclass2html_table(data_objects: list[Any]) -> str:
     if not all(map(is_dataclass, data_objects)):
         raise ValueError("All elements in the list should be dataclass instances.")
 
-    first_obj = data_objects[0]
+    # Convert dataclasses to dictionaries
+    data_dicts = [safe_asdict(obj) for obj in data_objects]
 
-    if not is_dataclass(first_obj):
-        raise ValueError("Provided object is not a dataclass instance.")
+    df = pd.DataFrame(data_dicts)
 
-    df = pd.DataFrame([asdict(obj) for obj in data_objects])
-
-    for field in fields(first_obj):
-        if field.type == datetime:
-            df[field.name] = pd.to_datetime(df[field.name])
-            df[field.name] = df[field.name].dt.strftime("%Y-%m-%d %H:%M:%S")
+    # Format datetime fields
+    for column in df.columns:
+        if pd.api.types.is_datetime64_any_dtype(df[column]):
+            df[column] = df[column].dt.strftime("%Y-%m-%d %H:%M:%S")
 
     return str(df.to_html(classes="data-table", border=0))
