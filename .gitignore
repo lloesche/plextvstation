@@ -11,6 +11,7 @@ docker-tag
 .tox/
 .*.swp
 *.egg-info
+*.db
 wheelhouse/
 test/build/*
 PASSED
